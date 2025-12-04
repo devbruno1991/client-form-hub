@@ -1,16 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Shield, Eye, EyeOff, FileText } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        navigate("/admin/dashboard");
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/admin/dashboard");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,24 +44,46 @@ const AdminLogin = () => {
 
     setIsLoading(true);
 
-    // Simulação de login - em produção, isso seria conectado a um backend
-    setTimeout(() => {
-      // Credenciais de demo
-      if (email === "admin@empresa.com" && password === "admin123") {
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/admin/dashboard`,
+          },
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Conta criada!",
+          description: "Você pode fazer login agora.",
+        });
+        setIsSignUp(false);
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
         toast({
           title: "Login realizado!",
           description: "Bem-vindo ao painel administrativo.",
         });
         navigate("/admin/dashboard");
-      } else {
-        toast({
-          title: "Erro de autenticação",
-          description: "E-mail ou senha incorretos.",
-          variant: "destructive",
-        });
       }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao processar solicitação.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -69,10 +109,10 @@ const AdminLogin = () => {
 
             {/* Title */}
             <h1 className="mb-2 text-center text-2xl font-bold text-card-foreground">
-              Acesso Administrativo
+              {isSignUp ? "Criar Conta Admin" : "Acesso Administrativo"}
             </h1>
             <p className="mb-8 text-center text-sm text-muted-foreground">
-              Entre com suas credenciais para acessar o painel
+              {isSignUp ? "Crie sua conta para acessar o painel" : "Entre com suas credenciais para acessar o painel"}
             </p>
 
             {/* Form */}
@@ -119,22 +159,27 @@ const AdminLogin = () => {
                 disabled={isLoading}
                 className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
               >
-                {isLoading ? "Entrando..." : "Entrar"}
+                {isLoading ? "Processando..." : isSignUp ? "Criar Conta" : "Entrar"}
               </Button>
             </form>
 
-            {/* Demo credentials hint */}
-            <div className="mt-6 rounded-lg bg-muted p-4">
-              <p className="text-xs text-muted-foreground text-center">
-                <strong>Demo:</strong> admin@empresa.com / admin123
-              </p>
-            </div>
+            {/* Toggle Sign Up / Login */}
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {isSignUp ? "Já tem conta?" : "Não tem conta?"}{" "}
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-primary hover:underline font-medium"
+              >
+                {isSignUp ? "Fazer login" : "Criar conta"}
+              </button>
+            </p>
           </div>
 
           {/* Back link */}
           <p className="mt-6 text-center text-sm text-muted-foreground">
             <Link to="/" className="text-primary hover:underline">
-              ← Voltar ao formulário
+              ← Voltar ao início
             </Link>
           </p>
         </div>

@@ -1,8 +1,23 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, Shield, ArrowRight } from "lucide-react";
+import { FileText, Shield, ArrowRight, Copy, Check } from "lucide-react";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const [copied, setCopied] = useState(false);
+  const formUrl = `${window.location.origin}/formulario`;
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(formUrl);
+    setCopied(true);
+    toast({
+      title: "Link copiado!",
+      description: "Compartilhe com seus clientes.",
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -34,21 +49,31 @@ const Index = () => {
             <span className="block text-primary">Simples e Rápido</span>
           </h1>
           
-          <p className="mb-10 text-lg text-muted-foreground">
-            Preencha o formulário de abertura inicial e receba um documento Word 
-            com todas as informações da sua empresa prontas para uso.
+          <p className="mb-6 text-lg text-muted-foreground">
+            Envie o link abaixo para seus clientes preencherem o formulário de abertura inicial.
           </p>
+
+          {/* Link para Cliente */}
+          <div className="mx-auto max-w-xl rounded-lg border border-border bg-card p-4 mb-8">
+            <p className="text-sm text-muted-foreground mb-3">Link para enviar ao cliente:</p>
+            <div className="flex items-center gap-2 bg-muted rounded-lg p-3">
+              <code className="flex-1 text-sm break-all text-left">{formUrl}</code>
+              <Button variant="ghost" size="sm" onClick={copyLink}>
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link to="/formulario">
               <Button size="lg" className="h-14 px-8 text-lg bg-primary text-primary-foreground hover:bg-primary/90">
-                Iniciar Cadastro
+                Ver Formulário
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/admin">
               <Button variant="outline" size="lg" className="h-14 px-8 text-lg">
-                Acesso Administrativo
+                Painel Admin
               </Button>
             </Link>
           </div>

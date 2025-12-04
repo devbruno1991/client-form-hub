@@ -1,12 +1,117 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, LogOut, FileText, Users, BarChart3 } from "lucide-react";
+import { Shield, LogOut, FileText, Download, Eye, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { generateWordFromDbData } from "@/utils/generateWord";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface ClientForm {
+  id: string;
+  razao_social: string;
+  razao_social_opcao2: string | null;
+  razao_social_opcao3: string | null;
+  nome_fantasia: string | null;
+  telefone: string | null;
+  celular: string | null;
+  email: string | null;
+  endereco: string | null;
+  numero: string | null;
+  logradouro: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+  referencia: string | null;
+  tipo_juridico: string | null;
+  porte_empresa: string | null;
+  objetivo_social: string | null;
+  regime_tributario: string | null;
+  capital_social: string | null;
+  socio1: boolean | null;
+  socio2: boolean | null;
+  socio3: boolean | null;
+  created_at: string;
+}
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [forms, setForms] = useState<ClientForm[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedForm, setSelectedForm] = useState<ClientForm | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/admin");
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/admin");
+      } else {
+        fetchForms();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const fetchForms = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("client_forms")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setForms(data || []);
+    } catch (error) {
+      console.error("Error fetching forms:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar formulários.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate("/admin");
+  };
+
+  const handleDownloadWord = async (form: ClientForm) => {
+    try {
+      await generateWordFromDbData(form);
+      toast({
+        title: "Sucesso",
+        description: "Documento Word gerado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar documento.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleViewForm = (form: ClientForm) => {
+    setSelectedForm(form);
+    setDialogOpen(true);
   };
 
   return (
@@ -31,67 +136,145 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="mb-8 text-2xl font-bold text-foreground">
-          Bem-vindo ao Painel Administrativo
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-foreground">
+            Formulários Recebidos
+          </h1>
+          <Button variant="outline" onClick={fetchForms} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Formulários</p>
-                <p className="text-2xl font-bold text-card-foreground">0</p>
-              </div>
+        {/* Stats Card */}
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm mb-8">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <FileText className="h-6 w-6 text-primary" />
             </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                <Users className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Clientes</p>
-                <p className="text-2xl font-bold text-card-foreground">0</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
-                <BarChart3 className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Downloads</p>
-                <p className="text-2xl font-bold text-card-foreground">0</p>
-              </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total de Formulários</p>
+              <p className="text-2xl font-bold text-card-foreground">{forms.length}</p>
             </div>
           </div>
         </div>
 
-        {/* Info Section */}
-        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-card-foreground">
-            Funcionalidades do Admin
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            Este painel administrativo permite gerenciar os formulários enviados pelos clientes.
-            Para armazenar e visualizar os dados dos formulários, é necessário conectar um backend.
-          </p>
-          <div className="flex gap-4">
-            <Link to="/">
-              <Button variant="outline">
-                Ver Formulário
-              </Button>
-            </Link>
+        {/* Forms Table */}
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+        ) : forms.length === 0 ? (
+          <div className="text-center py-12">
+            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Nenhum formulário recebido ainda.</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Compartilhe o link <code className="bg-muted px-2 py-1 rounded">/formulario</code> com seus clientes.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Razão Social</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">E-mail</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Telefone</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Data</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {forms.map((form) => (
+                    <tr key={form.id} className="border-t border-border hover:bg-muted/30">
+                      <td className="px-4 py-3 text-sm text-card-foreground">{form.razao_social}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{form.email || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{form.telefone || form.celular || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {new Date(form.created_at).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="ghost" onClick={() => handleViewForm(form)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleDownloadWord(form)}>
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* View Form Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Formulário</DialogTitle>
+          </DialogHeader>
+          {selectedForm && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="font-medium text-muted-foreground">Razão Social</p>
+                  <p>{selectedForm.razao_social}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Nome Fantasia</p>
+                  <p>{selectedForm.nome_fantasia || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">E-mail</p>
+                  <p>{selectedForm.email || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Telefone</p>
+                  <p>{selectedForm.telefone || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Celular</p>
+                  <p>{selectedForm.celular || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Cidade/UF</p>
+                  <p>{selectedForm.cidade || "-"} / {selectedForm.uf || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">CEP</p>
+                  <p>{selectedForm.cep || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Tipo Jurídico</p>
+                  <p>{selectedForm.tipo_juridico || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Porte da Empresa</p>
+                  <p>{selectedForm.porte_empresa || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Capital Social</p>
+                  <p>{selectedForm.capital_social || "-"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Data de Envio</p>
+                  <p>{new Date(selectedForm.created_at).toLocaleString("pt-BR")}</p>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Button onClick={() => handleDownloadWord(selectedForm)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar Word
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

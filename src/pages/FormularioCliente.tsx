@@ -1,12 +1,38 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormInput } from "@/components/FormInput";
 import { RadioOption } from "@/components/RadioOption";
-import { generateWordDocument, FormData } from "@/utils/generateWord";
 import { toast } from "@/hooks/use-toast";
-import { FileText, Shield } from "lucide-react";
+import { FileText, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface FormData {
+  razaoSocial: string;
+  razaoSocialOpcao2: string;
+  razaoSocialOpcao3: string;
+  nomeFantasia: string;
+  telefone: string;
+  celular: string;
+  email: string;
+  endereco: string;
+  numero: string;
+  logradouro: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  cep: string;
+  referencia: string;
+  tipoJuridico: string;
+  porteEmpresa: string;
+  objetivoSocial: string;
+  regimeTributario: string;
+  capitalSocial: string;
+  socio1: string;
+  socio2: string;
+  socio3: string;
+}
 
 const FormularioCliente = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -38,6 +64,7 @@ const FormularioCliente = () => {
 
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -72,15 +99,46 @@ const FormularioCliente = () => {
     setIsSubmitting(true);
     
     try {
-      await generateWordDocument(formData);
+      const { error } = await supabase.from("client_forms").insert({
+        razao_social: formData.razaoSocial,
+        razao_social_opcao2: formData.razaoSocialOpcao2,
+        razao_social_opcao3: formData.razaoSocialOpcao3,
+        nome_fantasia: formData.nomeFantasia,
+        telefone: formData.telefone,
+        celular: formData.celular,
+        email: formData.email,
+        endereco: formData.endereco,
+        numero: formData.numero,
+        logradouro: formData.logradouro,
+        complemento: formData.complemento,
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        uf: formData.uf,
+        cep: formData.cep,
+        referencia: formData.referencia,
+        tipo_juridico: formData.tipoJuridico,
+        porte_empresa: formData.porteEmpresa,
+        objetivo_social: formData.objetivoSocial,
+        regime_tributario: formData.regimeTributario,
+        capital_social: formData.capitalSocial,
+        socio1: formData.socio1 === "sim",
+        socio2: formData.socio2 === "sim",
+        socio3: formData.socio3 === "sim",
+        aceita_privacidade: acceptedPrivacy,
+      });
+
+      if (error) throw error;
+
+      setIsSubmitted(true);
       toast({
         title: "Sucesso!",
-        description: "Documento Word gerado e baixado com sucesso.",
+        description: "Formulário enviado com sucesso.",
       });
     } catch (error) {
+      console.error("Error submitting form:", error);
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao gerar o documento.",
+        description: "Ocorreu um erro ao enviar o formulário.",
         variant: "destructive",
       });
     } finally {
@@ -88,33 +146,33 @@ const FormularioCliente = () => {
     }
   };
 
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+            <CheckCircle className="h-10 w-10 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Formulário Enviado!</h1>
+          <p className="text-muted-foreground">Obrigado por preencher o formulário. Entraremos em contato em breve.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity">
+        <div className="container mx-auto flex items-center px-4 py-4">
+          <div className="flex items-center gap-2 text-primary">
             <FileText className="h-5 w-5" />
-            <span className="text-sm">Home</span>
-          </Link>
-          <Link 
-            to="/admin" 
-            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-          >
-            <Shield className="h-4 w-4" />
-            <span className="text-sm">Admin</span>
-          </Link>
+            <span className="font-semibold">Formulário Empresarial</span>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <Link to="/" className="text-primary hover:underline">Home</Link>
-          <span className="mx-2 text-muted-foreground">|</span>
-          <span className="text-muted-foreground">Fase de Abertura Inicial</span>
-        </nav>
-
         <h1 className="mb-8 text-2xl font-bold text-foreground md:text-3xl">
           Fase de Abertura Inicial
         </h1>
@@ -332,7 +390,7 @@ const FormularioCliente = () => {
                 disabled={isSubmitting}
                 className="min-w-[140px] bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {isSubmitting ? "Gerando..." : "Enviar"}
+                {isSubmitting ? "Enviando..." : "Enviar"}
               </Button>
             </div>
           </form>
