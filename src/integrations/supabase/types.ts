@@ -14,7 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      client_forms: {
+        Row: {
+          aceita_privacidade: boolean | null
+          bairro: string | null
+          capital_social: string | null
+          celular: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          id: string
+          logradouro: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          objetivo_social: string | null
+          porte_empresa: string | null
+          razao_social: string
+          razao_social_opcao2: string | null
+          razao_social_opcao3: string | null
+          referencia: string | null
+          regime_tributario: string | null
+          socio1: boolean | null
+          socio2: boolean | null
+          socio3: boolean | null
+          telefone: string | null
+          tipo_juridico: string | null
+          uf: string | null
+        }
+        Insert: {
+          aceita_privacidade?: boolean | null
+          bairro?: string | null
+          capital_social?: string | null
+          celular?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          objetivo_social?: string | null
+          porte_empresa?: string | null
+          razao_social: string
+          razao_social_opcao2?: string | null
+          razao_social_opcao3?: string | null
+          referencia?: string | null
+          regime_tributario?: string | null
+          socio1?: boolean | null
+          socio2?: boolean | null
+          socio3?: boolean | null
+          telefone?: string | null
+          tipo_juridico?: string | null
+          uf?: string | null
+        }
+        Update: {
+          aceita_privacidade?: boolean | null
+          bairro?: string | null
+          capital_social?: string | null
+          celular?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          objetivo_social?: string | null
+          porte_empresa?: string | null
+          razao_social?: string
+          razao_social_opcao2?: string | null
+          razao_social_opcao3?: string | null
+          referencia?: string | null
+          regime_tributario?: string | null
+          socio1?: boolean | null
+          socio2?: boolean | null
+          socio3?: boolean | null
+          telefone?: string | null
+          tipo_juridico?: string | null
+          uf?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
