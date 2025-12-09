@@ -17,6 +17,7 @@ export type Database = {
       client_forms: {
         Row: {
           aceita_privacidade: boolean | null
+          administracao: Json | null
           bairro: string | null
           capital_social: string | null
           celular: string | null
@@ -32,20 +33,25 @@ export type Database = {
           numero: string | null
           objetivo_social: string | null
           porte_empresa: string | null
+          quotas: Json | null
           razao_social: string
           razao_social_opcao2: string | null
           razao_social_opcao3: string | null
           referencia: string | null
           regime_tributario: string | null
           socio1: boolean | null
+          socio1_data: Json | null
           socio2: boolean | null
+          socio2_data: Json | null
           socio3: boolean | null
+          socio3_data: Json | null
           telefone: string | null
           tipo_juridico: string | null
           uf: string | null
         }
         Insert: {
           aceita_privacidade?: boolean | null
+          administracao?: Json | null
           bairro?: string | null
           capital_social?: string | null
           celular?: string | null
@@ -61,20 +67,25 @@ export type Database = {
           numero?: string | null
           objetivo_social?: string | null
           porte_empresa?: string | null
+          quotas?: Json | null
           razao_social: string
           razao_social_opcao2?: string | null
           razao_social_opcao3?: string | null
           referencia?: string | null
           regime_tributario?: string | null
           socio1?: boolean | null
+          socio1_data?: Json | null
           socio2?: boolean | null
+          socio2_data?: Json | null
           socio3?: boolean | null
+          socio3_data?: Json | null
           telefone?: string | null
           tipo_juridico?: string | null
           uf?: string | null
         }
         Update: {
           aceita_privacidade?: boolean | null
+          administracao?: Json | null
           bairro?: string | null
           capital_social?: string | null
           celular?: string | null
@@ -90,14 +101,18 @@ export type Database = {
           numero?: string | null
           objetivo_social?: string | null
           porte_empresa?: string | null
+          quotas?: Json | null
           razao_social?: string
           razao_social_opcao2?: string | null
           razao_social_opcao3?: string | null
           referencia?: string | null
           regime_tributario?: string | null
           socio1?: boolean | null
+          socio1_data?: Json | null
           socio2?: boolean | null
+          socio2_data?: Json | null
           socio3?: boolean | null
+          socio3_data?: Json | null
           telefone?: string | null
           tipo_juridico?: string | null
           uf?: string | null
