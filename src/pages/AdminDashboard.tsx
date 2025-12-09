@@ -12,6 +12,32 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+interface SocioData {
+  nome?: string;
+  cpf?: string;
+  rg?: string;
+  dataNascimento?: string;
+  nacionalidade?: string;
+  estadoCivil?: string;
+  profissao?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  uf?: string;
+  cep?: string;
+  capitalSocial?: string;
+}
+
+interface QuotaData {
+  nome?: string;
+  percentual?: number;
+  valor?: number;
+}
+
 interface ClientForm {
   id: string;
   razao_social: string;
@@ -38,8 +64,18 @@ interface ClientForm {
   socio1: boolean | null;
   socio2: boolean | null;
   socio3: boolean | null;
+  socio1_data?: SocioData | null;
+  socio2_data?: SocioData | null;
+  socio3_data?: SocioData | null;
+  quotas?: QuotaData[] | null;
+  administracao?: string[] | null;
   created_at: string;
 }
+
+const formatCurrency = (value: number | undefined): string => {
+  if (!value) return "-";
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+};
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -75,7 +111,7 @@ const AdminDashboard = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setForms(data || []);
+      setForms((data || []) as ClientForm[]);
     } catch (error) {
       console.error("Error fetching forms:", error);
       toast({
@@ -95,7 +131,7 @@ const AdminDashboard = () => {
 
   const handleDownloadWord = async (form: ClientForm) => {
     try {
-      await generateWordFromDbData(form);
+      await generateWordFromDbData(form as any);
       toast({
         title: "Sucesso",
         description: "Documento Word gerado com sucesso.",
@@ -112,6 +148,78 @@ const AdminDashboard = () => {
   const handleViewForm = (form: ClientForm) => {
     setSelectedForm(form);
     setDialogOpen(true);
+  };
+
+  const renderSocioData = (socioNum: number, socioData: SocioData | null | undefined) => {
+    if (!socioData || !socioData.nome) return null;
+    
+    return (
+      <div className="border-t pt-4 mt-4">
+        <h4 className="font-semibold text-card-foreground mb-3">Sócio {socioNum}</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="font-medium text-muted-foreground">Nome</p>
+            <p>{socioData.nome || "-"}</p>
+          </div>
+          <div>
+            <p className="font-medium text-muted-foreground">CPF</p>
+            <p>{socioData.cpf || "-"}</p>
+          </div>
+          <div>
+            <p className="font-medium text-muted-foreground">E-mail</p>
+            <p>{socioData.email || "-"}</p>
+          </div>
+          <div>
+            <p className="font-medium text-muted-foreground">Telefone</p>
+            <p>{socioData.telefone || "-"}</p>
+          </div>
+          <div>
+            <p className="font-medium text-muted-foreground">Capital Social (Sócio)</p>
+            <p>{socioData.capitalSocial || "-"}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderQuotas = (quotas: QuotaData[] | null | undefined) => {
+    if (!quotas || quotas.length === 0) return null;
+    const hasData = quotas.some(q => q.nome || q.percentual || q.valor);
+    if (!hasData) return null;
+    
+    return (
+      <div className="border-t pt-4 mt-4">
+        <h4 className="font-semibold text-card-foreground mb-3">Divisão das Cotas</h4>
+        <div className="space-y-2">
+          {quotas.map((quota, index) => (
+            (quota.nome || quota.percentual || quota.valor) && (
+              <div key={index} className="grid grid-cols-3 gap-4 text-sm">
+                <p><span className="text-muted-foreground">Nome:</span> {quota.nome || "-"}</p>
+                <p><span className="text-muted-foreground">%:</span> {quota.percentual || 0}%</p>
+                <p><span className="text-muted-foreground">Valor:</span> {formatCurrency(quota.valor)}</p>
+              </div>
+            )
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderAdministracao = (administracao: string[] | null | undefined) => {
+    if (!administracao || administracao.length === 0) return null;
+    const admins = administracao.filter(a => a && a.trim() !== "");
+    if (admins.length === 0) return null;
+    
+    return (
+      <div className="border-t pt-4 mt-4">
+        <h4 className="font-semibold text-card-foreground mb-3">Administração da Sociedade</h4>
+        <div className="space-y-1">
+          {admins.map((admin, index) => (
+            <p key={index}><span className="text-muted-foreground">Administrador {index + 1}:</span> {admin}</p>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -265,6 +373,18 @@ const AdminDashboard = () => {
                   <p>{new Date(selectedForm.created_at).toLocaleString("pt-BR")}</p>
                 </div>
               </div>
+
+              {/* Render Socio Data */}
+              {selectedForm.socio1 && renderSocioData(1, selectedForm.socio1_data as SocioData)}
+              {selectedForm.socio2 && renderSocioData(2, selectedForm.socio2_data as SocioData)}
+              {selectedForm.socio3 && renderSocioData(3, selectedForm.socio3_data as SocioData)}
+
+              {/* Render Quotas */}
+              {renderQuotas(selectedForm.quotas as QuotaData[])}
+
+              {/* Render Administracao */}
+              {renderAdministracao(selectedForm.administracao as string[])}
+
               <div className="pt-4">
                 <Button onClick={() => handleDownloadWord(selectedForm)}>
                   <Download className="h-4 w-4 mr-2" />
