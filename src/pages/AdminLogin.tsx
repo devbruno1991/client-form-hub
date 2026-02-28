@@ -11,7 +11,6 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,36 +44,18 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/admin/dashboard`,
-          },
-        });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toast({
-          title: "Conta criada!",
-          description: "Você pode fazer login agora.",
-        });
-        setIsSignUp(false);
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Login realizado!",
-          description: "Bem-vindo ao painel administrativo.",
-        });
-        navigate("/admin/dashboard");
-      }
+      toast({
+        title: "Login realizado!",
+        description: "Bem-vindo ao painel administrativo.",
+      });
+      navigate("/admin/dashboard");
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -109,10 +90,10 @@ const AdminLogin = () => {
 
             {/* Title */}
             <h1 className="mb-2 text-center text-2xl font-bold text-card-foreground">
-              {isSignUp ? "Criar Conta Admin" : "Acesso Administrativo"}
+              Acesso Administrativo
             </h1>
             <p className="mb-8 text-center text-sm text-muted-foreground">
-              {isSignUp ? "Crie sua conta para acessar o painel" : "Entre com suas credenciais para acessar o painel"}
+              Entre com suas credenciais para acessar o painel
             </p>
 
             {/* Form */}
@@ -159,21 +140,9 @@ const AdminLogin = () => {
                 disabled={isLoading}
                 className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
               >
-                {isLoading ? "Processando..." : isSignUp ? "Criar Conta" : "Entrar"}
+                {isLoading ? "Processando..." : "Entrar"}
               </Button>
             </form>
-
-            {/* Toggle Sign Up / Login */}
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              {isSignUp ? "Já tem conta?" : "Não tem conta?"}{" "}
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-primary hover:underline font-medium"
-              >
-                {isSignUp ? "Fazer login" : "Criar conta"}
-              </button>
-            </p>
           </div>
 
           {/* Back link */}
